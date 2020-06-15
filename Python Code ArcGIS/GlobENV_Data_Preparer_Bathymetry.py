@@ -1,12 +1,12 @@
 ##################################################################################################
 # GlobENV - Data Preparer Bathymetry - GlobENV_Data_Preparer_Bathymetry.py
 #
-# Dr Andy Davies - Bangor University, Wales - github: marecotec
+# Dr Andy Davies - University of Rhode Island, USA - github: marecotec
 #
 # This python code requires ArcGIS 10.4+.
 #
 ##################################################################################################
-# Copyright 2018 Dr Andy Davies
+# Copyright 2019 Dr Andy Davies
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this
 # software and associated documentation files (the "Software"), to deal in the Software without
@@ -180,6 +180,12 @@ def process_bathymetry(input_bathymetry, output_directory, test_mode):
             except:
                 arcpy.AddMessage("Now testing raster file... sp0.asc" + " --- fail")
 
+        arcpy.CopyRaster_management(os.path.join(output_directory, input_bathymetry),
+                                    os.path.join(output_directory, "bath_config"))
+
+        arcpy.CopyRaster_management(os.path.join(output_directory, input_bathymetry),
+                                    os.path.join(output_directory, "sp0"))
+
 
     else:
         # In this case, we need to split our raster into blocks
@@ -187,7 +193,7 @@ def process_bathymetry(input_bathymetry, output_directory, test_mode):
 
         if not arcpy.Exists(os.path.join(output_directory, "anull_rst")):
             arcpy.gp.SetNull_sa(input_bathymetry, input_bathymetry, os.path.join(output_directory, "anull_rst"),
-                                "VALUE >= 0")
+                                "VALUE >= 0.0")
             input_bathymetry = os.path.join(output_directory, "anull_rst")
 
         if not arcpy.Exists(os.path.join(output_directory, "null_rst")):
@@ -363,59 +369,7 @@ if __name__ == '__main__':
 
     test_mode = False
 
-    input_bathymetry = r"D:\sponges\bathymetry\Ireland\bathy111mp"
-    output_directory = r"D:\sponges\bathymetry\Ireland\bathy111mp_sr"
+    input_bathymetry = r"M:\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco2020\gebco_2020_proj.tif"
+    output_directory = r"M:\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco2020\gebco2020_sr"
 
     process_bathymetry(input_bathymetry, output_directory, test_mode)
-
-
-    input_bathymetry = r"D:\sponges\bathymetry\Ireland\bathy250mp"
-    output_directory = r"D:\sponges\bathymetry\Ireland\bathy250mp_sr"
-
-    process_bathymetry(input_bathymetry, output_directory, test_mode)
-
-
-    input_bathymetry = r"D:\sponges\bathymetry\Ireland\bathy500mp"
-    output_directory = r"D:\sponges\bathymetry\Ireland\bathy500mp_sr"
-
-    process_bathymetry(input_bathymetry, output_directory, test_mode)
-
-
-    input_bathymetry = r"D:\sponges\bathymetry\US_West\500m_gridp"
-    output_directory = r"D:\sponges\bathymetry\US_West\500m_gridp_sr"
-
-    process_bathymetry(input_bathymetry, output_directory, test_mode)
-
-
-    input_bathymetry = r"D:\sponges\bathymetry\US_West\crm_wcp"
-    output_directory = r"D:\sponges\bathymetry\US_West\crm_wcp_sr"
-
-    process_bathymetry(input_bathymetry, output_directory,test_mode)
-
-
-    input_bathymetry = r"D:\sponges\bathymetry\Global\etopo2oceanp"
-    output_directory = r"D:\sponges\bathymetry\Global\etopo2oceanp_sr3"
-
-    process_bathymetry(input_bathymetry, output_directory, test_mode)
-
-    input_bathymetry = r"D:\sponges\bathymetry\Global\gebco08p"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco08p_sr"
-
-    process_bathymetry(input_bathymetry, output_directory, test_mode)
-
-    input_bathymetry = r"D:\sponges\bathymetry\Global\srtm30p"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm30p_sr"
-
-    process_bathymetry(input_bathymetry, output_directory, test_mode)
-
-    input_bathymetry = r"D:\sponges\bathymetry\Global\gebco14p"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco14p_sr"
-
-    process_bathymetry(input_bathymetry, output_directory, test_mode)
-
-    input_bathymetry = r"D:\sponges\bathymetry\Global\srtm15p"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm15p_sr"
-
-    process_bathymetry(input_bathymetry, output_directory, test_mode)
-
-

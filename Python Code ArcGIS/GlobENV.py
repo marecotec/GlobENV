@@ -1,12 +1,15 @@
 ##################################################################################################
-# GlobENV - GlobENV.py
+#   ___ _     _    ___ _  ___   __
+#  / __| |___| |__| __| \| \ \ / /
+# | (_ | / _ \ '_ \ _|| .` |\ V /
+#  \___|_\___/_.__/___|_|\_| \_/
 #
-# Dr Andy Davies - Bangor University, Wales - github: marecotec
+# GlobENV - Benthic data layer interpolation
 #
-# This python code requires ArcGIS 10.4+.
+# Dr Andrew J Davies - University of Rhode Island, USA - github: marecotec
 #
 ##################################################################################################
-# Copyright 2018 Dr Andy Davies
+# Copyright 2019 Dr Andrew J Davies
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this
 # software and associated documentation files (the "Software"), to deal in the Software without
@@ -32,9 +35,10 @@ from arcpy import env
 from arcpy.sa import *
 import pandas as pd
 from functools import partial
+import subprocess
 
 
-def globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode, verbose_mode):
+def globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode, test_mode, verbose_mode):
 
     verbose_mode = verbose_mode
     environment_name = environment_name
@@ -100,7 +104,6 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
     else:
         arcpy.AddMessage("Error: Both depth and environmental data need to be in projected coordinate system")
         sys.exit(0)
-    # del input_bathymetry_desc, input_bathymetry_sr, input_environment0_desc, input_environment0_sr
 
     if not os.path.exists(os.path.join(output_directory, "Outputs")):
         os.makedirs(os.path.join(output_directory, "Outputs"))
@@ -129,7 +132,7 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
             for i in input_bathymetry_list_done:
                 mpprocess(output_directory, input_environment_depth, input_environment0_cs, input_environment,
                            input_environment_name, input_environment0_cs_x_min, input_environment0_cs_y_min,
-                           input_environment0_cs_x_max, input_environment0_cs_y_max, input_bathymetry_folder, test_mode, verbose_mode, i)
+                           input_environment0_cs_x_max, input_environment0_cs_y_max, input_bathymetry_folder, verbose_mode, i)
         else:
             arcpy.AddMessage("Parallel mode: There are " + str(len(input_bathymetry_list_done)) + " depth left to process.")
 
@@ -144,7 +147,7 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
             ans = pool.map(partial(mpprocess, output_directory, input_environment_depth, input_environment0_cs, input_environment,
                            input_environment_name, input_environment0_cs_x_min, input_environment0_cs_y_min,
                            input_environment0_cs_x_max,
-                           input_environment0_cs_y_max, input_bathymetry_folder, test_mode, verbose_mode), input_bathymetry_list_done)
+                           input_environment0_cs_y_max, input_bathymetry_folder, verbose_mode), input_bathymetry_list_done)
             pool.close()
             pool.join()
 
@@ -152,10 +155,12 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
         arcpy.AddMessage("All rasters processed")
 
 
-    if test_mode:
-        arcpy.AddMessage("Test mode complete in %s minutes." % ((time.clock() - t_start) / 60.0))
-        sys.exit(0)
-    else:
+    if chunk_mode == 'gdal':
+        env.workspace = os.path.join(output_directory, "Outputs")
+        output_list = arcpy.ListRasters("*", "ALL")
+        gdalchunk(output_directory, output_list)
+
+    elif chunk_mode == 'arcpy':
         env.workspace = os.path.join(output_directory, "Outputs")
         output_list = arcpy.ListRasters("*", "ALL")
 
@@ -209,13 +214,14 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
                                 os.path.join(output_directory, "tri_output"))
 
         arcpy.AddMessage("Output file is called *tri_output*..")
+        # noinspection PyInterpreter
         arcpy.AddMessage("Script complete in %s minutes." % ((time.clock() - t_start) / 60.0))
 
 
 def mpprocess(output_directory, input_environment_depth, input_environment0_cs, input_environment,
                        input_environment_name, input_environment0_cs_x_min, input_environment0_cs_y_min,
                        input_environment0_cs_x_max,
-                       input_environment0_cs_y_max, input_bathymetry_folder, test_mode, verbose_mode, input_bathymetry_list):
+                       input_environment0_cs_y_max, input_bathymetry_folder, verbose_mode, input_bathymetry_list):
 
     arcpy.CheckOutExtension("Spatial")
     arcpy.env.overwriteOutput = True
@@ -293,7 +299,7 @@ def mpprocess(output_directory, input_environment_depth, input_environment0_cs, 
             env_file_list = sorted(zip(env_files, env_values), key=lambda tup: tup[1])
 
             # 2 Get xyz values needed to build array
-            xy_coords = pd.read_pickle(os.path.join(location, "xy_coords.yxz"))
+            xy_coords = pd.read_pickle(os.path.join(location, "xy_coords.pkl"))
 
             y_min = y_min - (input_environment0_cs)
             y_max = y_max + (input_environment0_cs)
@@ -421,6 +427,9 @@ def mpprocess(output_directory, input_environment_depth, input_environment0_cs, 
                 data[bad_indexes] = interpolated
                 return data
 
+            # Workaround for single layer
+            #if len()
+            #del temp_depth[0]
             data = np.array([np.flipud(pad(arcpy.RasterToNumPyArray(os.path.join(location, bname + "%f" % f),
                                                                     arcpy.Point(x_min, y_min), len(x_vals),
                                                                     len(y_vals), nodata_to_value=np.nan))) for f in
@@ -441,8 +450,13 @@ def mpprocess(output_directory, input_environment_depth, input_environment0_cs, 
                 print len(x_vals)
                 print len(y_vals)
                 print len(z_vals)
+                print data.shape
+                print temp_depth
+                print temp_depth_reverse
 
             rgi = RegularGridInterpolator((x_vals, y_vals, z_vals), data, method='linear')
+            if verbose_mode:
+                print "here 2"
             return rgi, y_vals_min, y_vals_max, x_vals_min, x_vals_max
 
         # Build extents for subsetting the environemtnal grid
@@ -649,6 +663,30 @@ def mpprocess(output_directory, input_environment_depth, input_environment0_cs, 
 
 # Stage 3 - Mosaic the chunks back into the extent of the original bathymetry
 
+def gdalchunk(output_directory, output_list_chunk):
+    arcpy.AddMessage("Mosaicking inputs using GDAL")
+
+    arcpy.env.overwriteOutput = True
+
+    if not arcpy.Exists(os.path.join(output_directory, "Outputs_GDAL")):
+        os.makedirs(os.path.join(output_directory, "Outputs_GDAL"))
+
+    counter = 0
+
+    for raster_output in output_list_chunk:
+        counter += 1
+        arcpy.Mirror_management(in_raster=os.path.join(output_directory, "Outputs", raster_output),
+                                out_raster=os.path.join(output_directory, "Outputs_GDAL", "sp" + str(counter) + ".tif"))
+
+    gdal_location = r"c:\OSGeo4W64\bin\gdalwarp.exe --config GDAL_DATA C:\OSGeo4W64\share\gdal "
+    gdal_files = os.path.join(output_directory, "Outputs_GDAL", "sp*.tif")
+    gdal_output = os.path.join(output_directory, "tri_output.tif")
+
+    with open(os.devnull, "w") as f:
+        subprocess.call(gdal_location + gdal_files + " " + gdal_output, stdout=f)
+
+    arcpy.AddMessage("GDAL Mosaic complete..")
+
 def mpchunk(output_directory, input_bathymetry_cs, output_list_chunk):
     arcpy.AddMessage("Processing chunk: " + str(output_list_chunk[0]))
     arcpy.env.overwriteOutput = True
@@ -752,255 +790,67 @@ def raster_to_xyz(raster, raster_name, output, no_data_value):
 
 if __name__ == '__main__':
 
-    ## Temperature
-    input_environment = r"D:\sponges\world-ocean-atlas\Inputs\temperature\gridded_0-2\Projected"
-    environment_name = r"t_an"
-    cpu_cores_used = "44"
+    # #Interpolation Test - Global GEBCO 2019
+    # input_bathymetry_folder = r"E:\2_Bathymetries\North_Atlantic_EMT_Roberts\Bathymetry\gebco14_behr_sr"
+    # output_directory_root = r"E:\2_Bathymetries\North_Atlantic_EMT_Roberts\ph\rcp85"
+    # cpu_cores_used = "23"
+    # chunk_mode = 'gdal' # gdal or arcpy - GDAL way faster, need to install GDAL binaries in standard location
+    # test_mode = False
+    # verbose_mode = False
+    #
+    # for i in ['y2006-2016', 'y2020-2029', 'y2030-2039', 'y2040-2049', 'y2050-2059', 'y2060-2069', 'y2070-2079', 'y2080-2089', 'y2090-2099']:
+    #     input_environment = os.path.join(r"E:\1_Input_Environmental_Datasets\cmip5\ph\rcp85", str(i), r"Projected")
+    #     environment_name = r"ph"
+    #     output_directory = os.path.join(output_directory_root, str(i))
+    #     globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
+    #              test_mode, verbose_mode)
+
+    #Interpolation Test - Global GEBCO 2019
+    input_bathymetry_folder = r"E:\2_Bathymetries\Yesson_Greenland\Chris_Behr_100m_sr"
+    output_directory_root = r"E:\2_Bathymetries\Yesson_Greenland"
+    cpu_cores_used = "23"
+    chunk_mode = 'gdal' # gdal or arcpy - GDAL way faster, need to install GDAL binaries in standard location
     test_mode = False
     verbose_mode = False
 
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\etopo2oceanp_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\etopo2oceanp_temp"
+    input_environment = r'E:\1_Input_Environmental_Datasets\world-ocean-atlas-2018\salinity\Projected'
+    environment_name = 's_an'
+    output_directory = os.path.join(output_directory_root, environment_name)
+    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
+             test_mode, verbose_mode)
+
+    input_environment = r'E:\1_Input_Environmental_Datasets\world-ocean-atlas-2018\temperature\Projected'
+    environment_name = 't_an'
+    output_directory = os.path.join(output_directory_root, environment_name)
+    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
+             test_mode, verbose_mode)
+
+
+    # Temperature IDW
+    # input_environment = r"E:\1_Input_Environmental_Datasets\world-ocean-atlas-2018\interpolation_test\temp\idw\Projected"
+    # environment_name = r"t_an"
+    # output_directory = os.path.join(output_directory_root, "temp_idw")
+    # globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
+    #         test_mode, verbose_mode)
+    #
+    # # Temperature Spline
+    # input_environment = r"E:\1_Input_Environmental_Datasets\world-ocean-atlas-2018\interpolation_test\temp\spline\Projected"
+    # environment_name = r"t_an"
+    # output_directory = os.path.join(output_directory_root, "temp_spline")
+    # globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
+    #         test_mode, verbose_mode)
+
+    # #Temperature Kriging
+    # input_environment = r"E:\1_Input_Environmental_Datasets\world-ocean-atlas-2018\interpolation_test\temp\kriging\Projected"
+    # environment_name = r"t_an"
+    # output_directory = os.path.join(output_directory_root, "temp_kriging")
+    # globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
+    #         test_mode, verbose_mode)
+
+    #Temperature Natural Neighbor
+    # input_environment = r"E:\1_Input_Environmental_Datasets\world-ocean-atlas-2018\interpolation_test\temp\nat_idw\Projected"
+    # environment_name = r"t_an"
+    # output_directory = os.path.join(output_directory_root, "temp_nat_idw")
+    # globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
+    #         test_mode, verbose_mode)
 
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco08p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco08p_temp"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco14p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco14p_temp"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm30p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm30p_temp"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm15p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm15p_temp"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    ## Salinity
-    input_environment = r"D:\sponges\world-ocean-atlas\Inputs\salinity\Projected"
-    environment_name = r"s_an"
-    cpu_cores_used = "44"
-    test_mode = False
-    verbose_mode = False
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\etopo2oceanp_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\etopo2oceanp_sal"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco08p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco08p_sal"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco14p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco14p_sal"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-    
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm30p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm30p_sal"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm15p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm15p_sal"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    ## Apparent oxygen utilisation
-    input_environment = r"D:\sponges\world-ocean-atlas\Inputs\aoxu\gridded_0-5_bat\Projected"
-    environment_name = r"a_an"
-    cpu_cores_used = "44"
-    test_mode = False
-    verbose_mode = False
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\etopo2oceanp_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\etopo2oceanp_aoxu"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode, verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco08p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco08p_aoxu"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode, verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco14p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco14p_aoxu"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode, verbose_mode)
-    
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm30p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm30p_aoxu"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm15p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm15p_aoxu"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    ## Dissolved oxygen
-    input_environment = r"D:\sponges\world-ocean-atlas\Inputs\dissolvedO2\extracted\Projected"
-    environment_name = r"o_an"
-    cpu_cores_used = "44"
-    test_mode = False
-    verbose_mode = False
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\etopo2oceanp_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\etopo2oceanp_diso2"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode, verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco08p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco08p_diso2"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode, verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco14p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco14p_diso2"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode, verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm30p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm30p_diso2"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm15p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm15p_diso2"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-    
-    ## Nitrate
-    input_environment = r"D:\sponges\world-ocean-atlas\Inputs\nitrate\Projected"
-    environment_name = r"n_an"
-    cpu_cores_used = "44"
-    test_mode = False
-    verbose_mode = False
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\etopo2oceanp_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\etopo2oceanp_nit"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco08p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco08p_nit"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco14p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco14p_nit"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-    
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm30p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm30p_nit"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm15p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm15p_nit"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    ## Phosphate
-    input_environment = r"D:\sponges\world-ocean-atlas\Inputs\phosphate\Projected"
-    environment_name = r"p_an"
-    cpu_cores_used = "44"
-    test_mode = False
-    verbose_mode = False
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\etopo2oceanp_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\etopo2oceanp_phos"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco08p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco08p_phos"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco14p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco14p_phos"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm30p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm30p_phos"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm15p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm15p_phos"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    ## Silicate
-    input_environment = r"D:\sponges\world-ocean-atlas\Inputs\silicate\Projected"
-    environment_name = r"i_an"
-    cpu_cores_used = "44"
-    test_mode = False
-    verbose_mode = False
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\etopo2oceanp_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\etopo2oceanp_sil"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco08p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco08p_sil"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\gebco14p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\gebco14p_sil"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-    
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm30p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm30p_sil"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)
-
-    input_bathymetry_folder = r"D:\sponges\bathymetry\Global\srtm15p_sr"
-    output_directory = r"D:\sponges\bathymetry\Global\srtm15p_sil"
-
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, test_mode,
-            verbose_mode)

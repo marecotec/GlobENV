@@ -219,6 +219,8 @@ def ArcpyMap_1(input_bathymetry, input_tri, output_directory):
     gc.collect()
 
     fig.savefig(os.path.join(output_directory, "Plots", "tri_bathy.png"), dpi=300, bbox_inches='tight')
+    fig.clf()
+    plt.close()
 
     del fig, ax
 
@@ -805,21 +807,21 @@ def ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off):
 
 
 if __name__ == "__main__":
-    # # input ctd data directory (these are the downloaded unzipped files that come from WOD).
-    # input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
-    # # set an output directory, best to be empty
-    # output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco08\Validation\Temp"
-    # # your original bathymetric file that you used for the bathymetry data preparation script
-    # input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco08\Bathymetry\gebco08p"
-    # # input tri
-    # input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco08\Outputs\temp"
-    # # variable to process ("temp", "salinity")
-    # tri_variable = "temp"
-    # # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
-    # depth_cut_off = 0.1  # 0.1 = 10% plus and minus
-    #
-    # ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
-    # ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
+    # input ctd data directory (these are the downloaded unzipped files that come from WOD).
+    input_ctd = r"E:\2_Bathymetries\Validation"
+    # set an output directory, best to be empty
+    output_directory = r"E:\2_Bathymetries\Validation\Output_Sal"
+    # your original bathymetric file that you used for the bathymetry data preparation script
+    input_bathymetry = r"E:\2_Bathymetries\Mediterranean\Layers\depth.tif"
+    # input tri
+    input_tri = r"E:\2_Bathymetries\Mediterranean\Layers\sal.tif"
+    # variable to process ("temp", "salinity")
+    tri_variable = "sal"
+    # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
+    depth_cut_off = 0.1  # 0.1 = 10% plus and minus
+
+    ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
+    ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
 
     # # input ctd data directory (these are the downloaded unzipped files that come from WOD).
     # input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
@@ -853,102 +855,102 @@ if __name__ == "__main__":
     # ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
     # ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
 
-    gc.collect()
-
-    # input ctd data directory (these are the downloaded unzipped files that come from WOD).
-    input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
-    # set an output directory, best to be empty
-    output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Validation\temp"
-    # your original bathymetric file that you used for the bathymetry data preparation script
-    input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Bathymetry\gebco14p"
-    # input tri
-    input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Outputs\temp"
-    # variable to process ("temp", "salinity")
-    tri_variable = "temp"
-    # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
-    depth_cut_off = 0.1  # 0.1 = 10% plus and minus
-
-    ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
-    ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
-    gc.collect()
-    # input ctd data directory (these are the downloaded unzipped files that come from WOD).
-    input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
-    # set an output directory, best to be empty
-    output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Validation\sal"
-    # your original bathymetric file that you used for the bathymetry data preparation script
-    input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Bathymetry\gebco14p"
-    # input tri
-    input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Outputs\sal"
-    # variable to process ("temp", "salinity")
-    tri_variable = "sal"
-    # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
-    depth_cut_off = 0.1  # 0.1 = 10% plus and minus
-
-    ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
-    ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
-    gc.collect()
-    # input ctd data directory (these are the downloaded unzipped files that come from WOD).
-    input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
-    # set an output directory, best to be empty
-    output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Validation\diso2"
-    # your original bathymetric file that you used for the bathymetry data preparation script
-    input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Bathymetry\gebco14p"
-    # input tri
-    input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Outputs\diso2"
-    # variable to process ("temp", "salinity")
-    tri_variable = "diso2"
-    # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
-    depth_cut_off = 0.1  # 0.1 = 10% plus and minus
-
-    ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
-    ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
-    gc.collect()
-
-    # input ctd data directory (these are the downloaded unzipped files that come from WOD).
-    input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
-    # set an output directory, best to be empty
-    output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Validation\temp"
-    # your original bathymetric file that you used for the bathymetry data preparation script
-    input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Bathymetry\srtm30p"
-    # input tri
-    input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Outputs\temp"
-    # variable to process ("temp", "salinity")
-    tri_variable = "temp"
-    # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
-    depth_cut_off = 0.1  # 0.1 = 10% plus and minus
-
-    ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
-    ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
-    gc.collect()
-    # input ctd data directory (these are the downloaded unzipped files that come from WOD).
-    input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
-    # set an output directory, best to be empty
-    output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Validation\sal"
-    # your original bathymetric file that you used for the bathymetry data preparation script
-    input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Bathymetry\srtm30p"
-    # input tri
-    input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Outputs\sal"
-    # variable to process ("temp", "salinity")
-    tri_variable = "sal"
-    # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
-    depth_cut_off = 0.1  # 0.1 = 10% plus and minus
-
-    ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
-    ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
-    gc.collect()
-    # input ctd data directory (these are the downloaded unzipped files that come from WOD).
-    input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
-    # set an output directory, best to be empty
-    output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Validation\diso2"
-    # your original bathymetric file that you used for the bathymetry data preparation script
-    input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Bathymetry\srtm30p"
-    # input tri
-    input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Outputs\diso2"
-    # variable to process ("temp", "salinity")
-    tri_variable = "diso2"
-    # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
-    depth_cut_off = 0.1  # 0.1 = 10% plus and minus
-
-    ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
-    ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
-    gc.collect()
+    # gc.collect()
+    #
+    # # input ctd data directory (these are the downloaded unzipped files that come from WOD).
+    # input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
+    # # set an output directory, best to be empty
+    # output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Validation\temp"
+    # # your original bathymetric file that you used for the bathymetry data preparation script
+    # input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Bathymetry\gebco14p"
+    # # input tri
+    # input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Outputs\temp"
+    # # variable to process ("temp", "salinity")
+    # tri_variable = "temp"
+    # # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
+    # depth_cut_off = 0.1  # 0.1 = 10% plus and minus
+    #
+    # ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
+    # ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
+    # gc.collect()
+    # # input ctd data directory (these are the downloaded unzipped files that come from WOD).
+    # input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
+    # # set an output directory, best to be empty
+    # output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Validation\sal"
+    # # your original bathymetric file that you used for the bathymetry data preparation script
+    # input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Bathymetry\gebco14p"
+    # # input tri
+    # input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Outputs\sal"
+    # # variable to process ("temp", "salinity")
+    # tri_variable = "sal"
+    # # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
+    # depth_cut_off = 0.1  # 0.1 = 10% plus and minus
+    #
+    # ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
+    # ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
+    # gc.collect()
+    # # input ctd data directory (these are the downloaded unzipped files that come from WOD).
+    # input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
+    # # set an output directory, best to be empty
+    # output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Validation\diso2"
+    # # your original bathymetric file that you used for the bathymetry data preparation script
+    # input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Bathymetry\gebco14p"
+    # # input tri
+    # input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\Gebco14\Outputs\diso2"
+    # # variable to process ("temp", "salinity")
+    # tri_variable = "diso2"
+    # # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
+    # depth_cut_off = 0.1  # 0.1 = 10% plus and minus
+    #
+    # ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
+    # ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
+    # gc.collect()
+    #
+    # # input ctd data directory (these are the downloaded unzipped files that come from WOD).
+    # input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
+    # # set an output directory, best to be empty
+    # output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Validation\temp"
+    # # your original bathymetric file that you used for the bathymetry data preparation script
+    # input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Bathymetry\srtm30p"
+    # # input tri
+    # input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Outputs\temp"
+    # # variable to process ("temp", "salinity")
+    # tri_variable = "temp"
+    # # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
+    # depth_cut_off = 0.1  # 0.1 = 10% plus and minus
+    #
+    # ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
+    # ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
+    # gc.collect()
+    # # input ctd data directory (these are the downloaded unzipped files that come from WOD).
+    # input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
+    # # set an output directory, best to be empty
+    # output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Validation\sal"
+    # # your original bathymetric file that you used for the bathymetry data preparation script
+    # input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Bathymetry\srtm30p"
+    # # input tri
+    # input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Outputs\sal"
+    # # variable to process ("temp", "salinity")
+    # tri_variable = "sal"
+    # # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
+    # depth_cut_off = 0.1  # 0.1 = 10% plus and minus
+    #
+    # ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
+    # ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
+    # gc.collect()
+    # # input ctd data directory (these are the downloaded unzipped files that come from WOD).
+    # input_ctd = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\ETOPO2\Validation"
+    # # set an output directory, best to be empty
+    # output_directory = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Validation\diso2"
+    # # your original bathymetric file that you used for the bathymetry data preparation script
+    # input_bathymetry = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Bathymetry\srtm30p"
+    # # input tri
+    # input_tri = r"//10.10.10.104\Model_Outputs\GlobEnv\2_Bathymetries_and_Outputs\Global\srtm30\Outputs\diso2"
+    # # variable to process ("temp", "salinity")
+    # tri_variable = "diso2"
+    # # depth cut off - if CTD max depth is proportionally different than bathymetric layer depth
+    # depth_cut_off = 0.1  # 0.1 = 10% plus and minus
+    #
+    # ExtractWOD(input_ctd, output_directory, input_bathymetry, input_tri)
+    # ValidateLayerStatisticsPlots(output_directory, tri_variable, depth_cut_off)
+    # gc.collect()
