@@ -790,67 +790,38 @@ def raster_to_xyz(raster, raster_name, output, no_data_value):
 
 if __name__ == '__main__':
 
-    # #Interpolation Test - Global GEBCO 2019
-    # input_bathymetry_folder = r"E:\2_Bathymetries\North_Atlantic_EMT_Roberts\Bathymetry\gebco14_behr_sr"
-    # output_directory_root = r"E:\2_Bathymetries\North_Atlantic_EMT_Roberts\ph\rcp85"
-    # cpu_cores_used = "23"
-    # chunk_mode = 'gdal' # gdal or arcpy - GDAL way faster, need to install GDAL binaries in standard location
-    # test_mode = False
-    # verbose_mode = False
-    #
-    # for i in ['y2006-2016', 'y2020-2029', 'y2030-2039', 'y2040-2049', 'y2050-2059', 'y2060-2069', 'y2070-2079', 'y2080-2089', 'y2090-2099']:
-    #     input_environment = os.path.join(r"E:\1_Input_Environmental_Datasets\cmip5\ph\rcp85", str(i), r"Projected")
-    #     environment_name = r"ph"
-    #     output_directory = os.path.join(output_directory_root, str(i))
-    #     globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
-    #              test_mode, verbose_mode)
+    env_data = [
+        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\temperature\Projected", "t_an", "temp"],
+        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\salinity\Projected", "s_an", "sal"],
+        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\aoxu\Output\Projected", "a_an", "aoxu"],
+        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\nitrate\Output\Projected", "n_an", "nit"],
+        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\oxygen\Projected", "o_an", "diso2"],
+        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\phosphate\Output\Projected", "p_an", "phos"],
+        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\pos\Output\Projected", "o_an", "pos"],
+        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\silicate\Output\Projected", "i_an", "sil"]
+        ]
 
-    #Interpolation Test - Global GEBCO 2019
-    input_bathymetry_folder = r"E:\2_Bathymetries\Yesson_Greenland\Chris_Behr_100m_sr"
-    output_directory_root = r"E:\2_Bathymetries\Yesson_Greenland"
-    cpu_cores_used = "23"
-    chunk_mode = 'gdal' # gdal or arcpy - GDAL way faster, need to install GDAL binaries in standard location
+    bathymetries = [[r"D:\GlobENV\2_Bathymetries_and_Outputs\NEA\srtm_sr", "srtm"],
+                    [r"D:\GlobENV\2_Bathymetries_and_Outputs\NEA\gebco_sr", "gebco"]
+                    ]
+
+    output_directory_base = r"D:\GlobENV\2_Bathymetries_and_Outputs\NEA"
+
+    cpu_cores_used = "10"
+    chunk_mode = 'gdal'  # gdal or arcpy - GDAL way faster, need to install GDAL binaries in standard location
     test_mode = False
     verbose_mode = False
 
-    input_environment = r'E:\1_Input_Environmental_Datasets\world-ocean-atlas-2018\salinity\Projected'
-    environment_name = 's_an'
-    output_directory = os.path.join(output_directory_root, environment_name)
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
-             test_mode, verbose_mode)
-
-    input_environment = r'E:\1_Input_Environmental_Datasets\world-ocean-atlas-2018\temperature\Projected'
-    environment_name = 't_an'
-    output_directory = os.path.join(output_directory_root, environment_name)
-    globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
-             test_mode, verbose_mode)
-
-
-    # Temperature IDW
-    # input_environment = r"E:\1_Input_Environmental_Datasets\world-ocean-atlas-2018\interpolation_test\temp\idw\Projected"
-    # environment_name = r"t_an"
-    # output_directory = os.path.join(output_directory_root, "temp_idw")
-    # globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
-    #         test_mode, verbose_mode)
-    #
-    # # Temperature Spline
-    # input_environment = r"E:\1_Input_Environmental_Datasets\world-ocean-atlas-2018\interpolation_test\temp\spline\Projected"
-    # environment_name = r"t_an"
-    # output_directory = os.path.join(output_directory_root, "temp_spline")
-    # globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
-    #         test_mode, verbose_mode)
-
-    # #Temperature Kriging
-    # input_environment = r"E:\1_Input_Environmental_Datasets\world-ocean-atlas-2018\interpolation_test\temp\kriging\Projected"
-    # environment_name = r"t_an"
-    # output_directory = os.path.join(output_directory_root, "temp_kriging")
-    # globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
-    #         test_mode, verbose_mode)
-
-    #Temperature Natural Neighbor
-    # input_environment = r"E:\1_Input_Environmental_Datasets\world-ocean-atlas-2018\interpolation_test\temp\nat_idw\Projected"
-    # environment_name = r"t_an"
-    # output_directory = os.path.join(output_directory_root, "temp_nat_idw")
-    # globenv(input_bathymetry_folder, input_environment, environment_name, output_directory, cpu_cores_used, chunk_mode,
-    #         test_mode, verbose_mode)
-
+    for b in bathymetries:
+        for e in env_data:
+            if b[1] == 'srtm' and e[2] == 'temp':
+                pass
+            elif b[1] == 'srtm' and e[2] == 'sal':
+                pass
+            elif b[1] == 'srtm' and e[2] == 'aoxu':
+                pass
+            elif b[1] == 'srtm' and e[2] == 'nit':
+                pass
+            else:
+                globenv(b[0], e[0], e[1], os.path.join(output_directory_base, b[1], e[2]), cpu_cores_used, chunk_mode, test_mode,
+                        verbose_mode)
