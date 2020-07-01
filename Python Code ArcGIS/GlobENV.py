@@ -46,8 +46,8 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
 
-    arcpy.AddMessage("GlobENV - Trilinear interpolation of environmental data onto bathymetry")
-    arcpy.AddMessage("... processing " + str(input_bathymetry_folder))
+    print "GlobENV - Trilinear interpolation of environmental data onto bathymetry"
+    print "... Processing " + str(input_bathymetry_folder)
 
     t_start = time.clock()
 
@@ -68,10 +68,10 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
 
     input_environment_depth.sort()
 
-    arcpy.AddMessage("There are " + str(len(input_environment_depth)) + " environmental layers")
+    print "... There are " + str(len(input_environment_depth)) + " environmental layers"
 
     if len(input_environment_depth) < 2:
-        arcpy.AddMessage("Error: Too few environmental layers for Trilinear interpolation")
+        print "Error: Too few environmental layers for Trilinear interpolation"
         sys.exit(0)
     else:
         pass
@@ -93,16 +93,15 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
     input_environment0_cs_y_max = input_environment0_desc.extent.YMax - (0.5 * input_environment0_cs)
 
     if input_bathymetry_sr.type == "Projected" and input_environment0_sr.type == "Projected":
-        arcpy.AddMessage("Both depth and environmental data are in valid projection")
+        print "... Both depth and environmental data are in valid projection"
         if input_bathymetry_sr.name == input_environment0_sr.name:
             pass
         else:
-            arcpy.AddMessage(
-                "Error: Depth and environmental data are in different projections, must be identical")
+            print "Error: Depth and environmental data are in different projections, must be identical"
             sys.exit(0)
         pass
     else:
-        arcpy.AddMessage("Error: Both depth and environmental data need to be in projected coordinate system")
+        print "Error: Both depth and environmental data need to be in projected coordinate system"
         sys.exit(0)
 
     if not os.path.exists(os.path.join(output_directory, "Outputs")):
@@ -111,7 +110,7 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
     env.workspace = input_bathymetry_folder
     input_bathymetry_list = arcpy.ListRasters("sp*", "GRID")
 
-    arcpy.AddMessage("There are " + str(len(input_bathymetry_list)) + " depth blocks to process.")
+    print "... There are " + str(len(input_bathymetry_list)) + " depth blocks to process."
 
     input_bathymetry_list_done = []
 
@@ -120,7 +119,7 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
             r = arcpy.Raster(os.path.join(input_bathymetry_folder, str(i)))
         except:
             r = False
-            arcpy.AddMessage("Issue reading raster " + str(i))
+            print "... Issue reading raster " + str(i)
 
         del r
         if not os.path.exists(os.path.join(output_directory, "Outputs", str(i) + ".asc")):
@@ -128,20 +127,20 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
 
     if len(input_bathymetry_list_done) > 0:
         if test_mode:
-            arcpy.AddMessage("Test mode: Processing in a single thread")
+            print "... Test mode: Processing in a single thread"
             for i in input_bathymetry_list_done:
                 mpprocess(output_directory, input_environment_depth, input_environment0_cs, input_environment,
                            input_environment_name, input_environment0_cs_x_min, input_environment0_cs_y_min,
                            input_environment0_cs_x_max, input_environment0_cs_y_max, input_bathymetry_folder, verbose_mode, i)
         else:
-            arcpy.AddMessage("Parallel mode: There are " + str(len(input_bathymetry_list_done)) + " depth left to process.")
+            print "... Parallel mode: There are " + str(len(input_bathymetry_list_done)) + " depth left to process."
 
             if int(len(input_bathymetry_list_done)) < int(cpu_cores_used):
                 pool = multiprocessing.Pool(int(len(input_bathymetry_list_done)))
-                arcpy.AddMessage("Will use " + str(int(len(input_bathymetry_list_done))) + " cores for processing")
+                print "... Will use " + str(int(len(input_bathymetry_list_done))) + " cores for processing"
             else:
                 pool = multiprocessing.Pool(int(cpu_cores_used))
-                arcpy.AddMessage("Will use " + str(cpu_cores_used) + " cores for processing")
+                print "... Will use " + str(cpu_cores_used) + " cores for processing"
 
             func = 1
             ans = pool.map(partial(mpprocess, output_directory, input_environment_depth, input_environment0_cs, input_environment,
@@ -152,7 +151,7 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
             pool.join()
 
     else:
-        arcpy.AddMessage("All rasters processed")
+        print "... All rasters processed"
 
 
     if chunk_mode == 'gdal':
@@ -161,6 +160,9 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
         gdalchunk(output_directory, output_list)
 
     elif chunk_mode == 'arcpy':
+
+        print "... Mosaicking using arcpy, very slow"
+
         env.workspace = os.path.join(output_directory, "Outputs")
         output_list = arcpy.ListRasters("*", "ALL")
 
@@ -172,15 +174,15 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
         else:
             output_list_chunk = [output_list[x:x + 5] for x in xrange(0, len(output_list), 5)]
 
-        arcpy.AddMessage("Building pool to mosaic " + str(len(output_list)) + " rasters, " + "in " + str(
-            len(output_list_chunk)) + " chunks.")
+        print "... Building pool to mosaic " + str(len(output_list)) + " rasters, " + "in " + str(
+            len(output_list_chunk)) + " chunks."
 
         if int(len(output_list_chunk)) < int(cpu_cores_used):
             pool2 = multiprocessing.Pool(int(len(output_list_chunk)))
-            arcpy.AddMessage("Will use " + str(int(len(output_list_chunk))) + " cores for processing")
+            print "... Will use " + str(int(len(output_list_chunk))) + " cores for mosaic processing"
         else:
             pool2 = multiprocessing.Pool(int(cpu_cores_used))
-            arcpy.AddMessage("Will use " + str(cpu_cores_used) + " cores for processing")
+            print "... Will use " + str(cpu_cores_used) + " cores for mosaic processing"
 
         func_mosaic = partial(mpchunk, output_directory, input_bathymetry_cs)
         pool2.map(func_mosaic, output_list_chunk)
@@ -195,7 +197,7 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
 
         env.workspace = os.path.join(output_directory, "Outputs_C")
 
-        arcpy.AddMessage("Mosaicking " + str(len(chunk_list_a)) + " chunks together.")
+        print "... Mosaicking " + str(len(chunk_list_a)) + " chunks together."
 
         arcpy.MosaicToNewRaster_management(
             input_rasters=chunk_list_a,
@@ -213,482 +215,475 @@ def globenv(input_bathymetry_folder, input_environment, environment_name, output
         arcpy.Rename_management(os.path.join(output_directory, "f"),
                                 os.path.join(output_directory, "tri_output"))
 
-        arcpy.AddMessage("Output file is called *tri_output*..")
-        # noinspection PyInterpreter
-        arcpy.AddMessage("Script complete in %s minutes." % ((time.clock() - t_start) / 60.0))
-
+        print "... GlobENV complete!"
 
 def mpprocess(output_directory, input_environment_depth, input_environment0_cs, input_environment,
                        input_environment_name, input_environment0_cs_x_min, input_environment0_cs_y_min,
                        input_environment0_cs_x_max,
                        input_environment0_cs_y_max, input_bathymetry_folder, verbose_mode, input_bathymetry_list):
-
-    arcpy.CheckOutExtension("Spatial")
-    arcpy.env.overwriteOutput = True
-    depth_array_min_comp = -9999
-    depth_array_max_comp = -9999
-
-    if not os.path.exists(os.path.join(output_directory, "1_Temp", str(input_bathymetry_list))):
-        os.makedirs(os.path.join(output_directory, "1_Temp", str(input_bathymetry_list)))
-
-    env.workspace = os.path.join(output_directory, "1_Temp", str(input_bathymetry_list))
-    env.scratchWorkspace = os.path.join(output_directory, "1_Temp", str(input_bathymetry_list))
-
     try:
-        arcpy.AddMessage("Reading bathymetric layer: " + str(input_bathymetry_list))
-        arcpy.RasterToASCII_conversion(os.path.join(input_bathymetry_folder, input_bathymetry_list),
-                                       os.path.join(output_directory,
-                                                    str(
-                                                        input_bathymetry_list) + ".asc"))
-        input_bathymetry_split = arcpy.Raster(os.path.join(output_directory,
-                                                           str(
-                                                               input_bathymetry_list) + ".asc"))
-        input_bathymetry_split_i = input_bathymetry_list
-    except:
-        arcpy.AddWarning("Unable to read bathymetric layer: " + str(input_bathymetry_list))
-        input_bathymetry_split = False
-        input_bathymetry_split_i = False
+        arcpy.CheckOutExtension("Spatial")
+        arcpy.env.overwriteOutput = True
+        depth_array_min_comp = -9999
+        depth_array_max_comp = -9999
 
-    if arcpy.Exists(input_bathymetry_split) and not \
-            os.path.exists(
-                os.path.join(output_directory, "Outputs", str(input_bathymetry_split) + ".asc")):
+        if not os.path.exists(os.path.join(output_directory, "1_Temp", str(input_bathymetry_list))):
+            os.makedirs(os.path.join(output_directory, "1_Temp", str(input_bathymetry_list)))
 
-        no_data_value = 349000000.0
-        input_bathymetry_split_2 = Con(IsNull(input_bathymetry_split), no_data_value,
-                                       input_bathymetry_split)
+        env.workspace = os.path.join(output_directory, "1_Temp", str(input_bathymetry_list))
+        env.scratchWorkspace = os.path.join(output_directory, "1_Temp", str(input_bathymetry_list))
 
-        raster_to_xyz(input_bathymetry_split_2, str(input_bathymetry_list),
-                      os.path.join(output_directory, "1_Temp", str(input_bathymetry_list)), no_data_value)
+        log_file("GlobENV Logfile\n\n", output_directory, input_bathymetry_list, verbose_mode)
+        log_file("Bathymetry: " + str(input_bathymetry_list) + "\n", output_directory, input_bathymetry_list, verbose_mode)
+        log_file("Environment name: " + str(input_environment_name) + "\n", output_directory, input_bathymetry_list, verbose_mode)
 
-        input_bathymetry_extent = input_bathymetry_split_2.extent
+        try:
+            arcpy.RasterToASCII_conversion(os.path.join(input_bathymetry_folder, input_bathymetry_list),
+                                           os.path.join(output_directory,
+                                                        str(
+                                                            input_bathymetry_list) + ".asc"))
+            input_bathymetry_split = arcpy.Raster(os.path.join(output_directory,
+                                                               str(
+                                                                   input_bathymetry_list) + ".asc"))
+            input_bathymetry_split_i = input_bathymetry_list
+        except:
+            log_file.write("Unable to read bathymetric layer: " + str(input_bathymetry_list))
+            log_file("Unable to read bathymetric layer" + "\n", output_directory, input_bathymetry_list, verbose_mode)
+            input_bathymetry_split = False
+            input_bathymetry_split_i = False
 
-        depth_array = pd.read_csv(
-            os.path.join(output_directory, "1_Temp", str(input_bathymetry_list), str(input_bathymetry_list) + ".yxz"),
-            header=None,
-            names=["y", "x", "depth"], sep=" ")
+        if arcpy.Exists(input_bathymetry_split) and not \
+                os.path.exists(
+                    os.path.join(output_directory, "Outputs", str(input_bathymetry_split) + ".asc")):
 
-        depth_array.loc[depth_array["depth"] == no_data_value, "depth"] = np.nan
+            no_data_value = 349000000.0
+            input_bathymetry_split_2 = Con(IsNull(input_bathymetry_split), no_data_value,
+                                           input_bathymetry_split)
 
-        depth_array_min = depth_array['depth'].min()
-        depth_array_max = depth_array['depth'].max()
-        depth_array_x_min = depth_array['x'].min()
-        depth_array_x_max = depth_array['x'].max()
-        depth_array_y_min = depth_array['y'].min()
-        depth_array_y_max = depth_array['y'].max()
+            raster_to_xyz(input_bathymetry_split_2, str(input_bathymetry_list),
+                          os.path.join(output_directory, "1_Temp", str(input_bathymetry_list)), no_data_value)
 
-        tri_value_list = []
+            input_bathymetry_extent = input_bathymetry_split_2.extent
 
-        if depth_array_min < 0:
-            depth_array["depth"] *= -1
+            depth_array = pd.read_csv(
+                os.path.join(output_directory, "1_Temp", str(input_bathymetry_list), str(input_bathymetry_list) + ".yxz"),
+                header=None,
+                names=["y", "x", "depth"], sep=" ")
+
+            depth_array.loc[depth_array["depth"] == no_data_value, "depth"] = np.nan
+
             depth_array_min = depth_array['depth'].min()
             depth_array_max = depth_array['depth'].max()
+            depth_array_x_min = depth_array['x'].min()
+            depth_array_x_max = depth_array['x'].max()
+            depth_array_y_min = depth_array['y'].min()
+            depth_array_y_max = depth_array['y'].max()
 
-        def build_env_array(location, bname, z_min, z_max, y_min, y_max, x_min, x_max):
-            # 1 Extract list of files.
-            env_files = []
-            env_values = []
-            env.workspace = location
-            rasterlist1 = arcpy.ListRasters("*")
-            for f in rasterlist1:
-                f2 = float(f.replace(bname, ""))
-                env_values.append(f2)
-                env_files.append(f)
-            else:
-                pass
+            tri_value_list = []
 
-            env_file_list = sorted(zip(env_files, env_values), key=lambda tup: tup[1])
+            if depth_array_min < 0:
+                depth_array["depth"] *= -1
+                depth_array_min = depth_array['depth'].min()
+                depth_array_max = depth_array['depth'].max()
 
-            # 2 Get xyz values needed to build array
-            xy_coords = pd.read_pickle(os.path.join(location, "xy_coords.pkl"))
+            def build_env_array(location, bname, z_min, z_max, y_min, y_max, x_min, x_max):
+                # 1 Extract list of files.
+                env_files = []
+                env_values = []
+                env.workspace = location
+                rasterlist1 = arcpy.ListRasters("*")
+                for f in rasterlist1:
+                    f2 = float(f.replace(bname, ""))
+                    env_values.append(f2)
+                    env_files.append(f)
+                else:
+                    pass
 
-            y_min = y_min - (input_environment0_cs)
-            y_max = y_max + (input_environment0_cs)
-            x_min = x_min - (input_environment0_cs)
-            x_max = x_max + (input_environment0_cs)
+                env_file_list = sorted(zip(env_files, env_values), key=lambda tup: tup[1])
 
-            x_vals = np.unique(xy_coords["x"])
-            y_vals = np.unique(xy_coords["y"])
+                # 2 Get xyz values needed to build array
+                xy_coords = pd.read_pickle(os.path.join(location, "xy_coords.pkl"))
 
-            if input_environment0_cs_x_min > x_min and input_environment0_cs_y_min > y_min:
-                x_min = input_environment0_cs_x_min
-                y_min = input_environment0_cs_y_min
-            elif input_environment0_cs_x_min > x_min:
-                x_min = input_environment0_cs_x_min
-            elif input_environment0_cs_y_min > y_min:
-                y_min = input_environment0_cs_y_min
+                y_min = y_min - (input_environment0_cs)
+                y_max = y_max + (input_environment0_cs)
+                x_min = x_min - (input_environment0_cs)
+                x_max = x_max + (input_environment0_cs)
 
-            if input_environment0_cs_x_max < x_max and input_environment0_cs_y_max < y_max:
-                x_max = input_environment0_cs_x_max
-                y_max = input_environment0_cs_y_max
-            elif input_environment0_cs_x_max < x_max:
-                x_max = input_environment0_cs_x_max
-            elif input_environment0_cs_y_max < y_max:
-                y_max = input_environment0_cs_y_max
-                if verbose_mode:
-                    print("4")
+                x_vals = np.unique(xy_coords["x"])
+                y_vals = np.unique(xy_coords["y"])
 
-            if verbose_mode:
-                print("y min: " + str(y_min))
-                print("y max: " + str(y_max))
+                if input_environment0_cs_x_min > x_min and input_environment0_cs_y_min > y_min:
+                    x_min = input_environment0_cs_x_min
+                    y_min = input_environment0_cs_y_min
+                elif input_environment0_cs_x_min > x_min:
+                    x_min = input_environment0_cs_x_min
+                elif input_environment0_cs_y_min > y_min:
+                    y_min = input_environment0_cs_y_min
 
-            x_vals = [i for i in x_vals if i > x_min and i < x_max]
-            y_vals = [i for i in y_vals if i > y_min and i < y_max]
+                if input_environment0_cs_x_max < x_max and input_environment0_cs_y_max < y_max:
+                    x_max = input_environment0_cs_x_max
+                    y_max = input_environment0_cs_y_max
+                elif input_environment0_cs_x_max < x_max:
+                    x_max = input_environment0_cs_x_max
+                elif input_environment0_cs_y_max < y_max:
+                    y_max = input_environment0_cs_y_max
 
-            # Some times we may have bathymetric points outside of the environmental
-            # layer, and as such, we need to work around this. It only works for the
-            # situation where y_min > input_environment0_cs_y_max, as the SplitRaster code
-            # will not usually have a problem at the input_environment0_cs_y_min region.
-            if not y_vals:
-                y_min = input_environment0_cs_y_max - (input_environment0_cs * 3)
-                y_vals = [i for i in np.unique(xy_coords["y"]) if i > y_min and i < y_max]
+                log_file("y min: " + str(y_min) + "\n", output_directory, input_bathymetry_list, verbose_mode)
+                log_file("y max: " + str(y_max) + "\n", output_directory, input_bathymetry_list, verbose_mode)
+                log_file("x min: " + str(x_min) + "\n", output_directory, input_bathymetry_list, verbose_mode)
+                log_file("x max: " + str(x_max) + "\n", output_directory, input_bathymetry_list, verbose_mode)
+                log_file("z min: " + str(z_min) + "\n", output_directory, input_bathymetry_list, verbose_mode)
+                log_file("z max: " + str(z_max) + "\n", output_directory, input_bathymetry_list, verbose_mode)
 
-            x_vals_min = min(x_vals)
-            x_vals_max = max(x_vals)
-            y_vals_min = min(y_vals)
-            y_vals_max = max(y_vals)
+                x_vals = [i for i in x_vals if i > x_min and i < x_max]
+                y_vals = [i for i in y_vals if i > y_min and i < y_max]
 
-            if y_vals_min == y_vals_max:
-                y_min = y_vals_min - (input_environment0_cs * 3)
-                y_vals = [i for i in np.unique(xy_coords["y"]) if i > y_min and i < y_max]
+                # Some times we may have bathymetric points outside of the environmental
+                # layer, and as such, we need to work around this. It only works for the
+                # situation where y_min > input_environment0_cs_y_max, as the SplitRaster code
+                # will not usually have a problem at the input_environment0_cs_y_min region.
+                if not y_vals:
+                    y_min = input_environment0_cs_y_max - (input_environment0_cs * 3)
+                    y_vals = [i for i in np.unique(xy_coords["y"]) if i > y_min and i < y_max]
+
+                x_vals_min = min(x_vals)
+                x_vals_max = max(x_vals)
                 y_vals_min = min(y_vals)
                 y_vals_max = max(y_vals)
 
-            temp_name = []
-            temp_depth = []
+                if y_vals_min == y_vals_max:
+                    y_min = y_vals_min - (input_environment0_cs * 3)
+                    y_vals = [i for i in np.unique(xy_coords["y"]) if i > y_min and i < y_max]
+                    y_vals_min = min(y_vals)
+                    y_vals_max = max(y_vals)
 
-            counter = 1
-            key = -1
+                env_name = []
+                env_depth = []
 
-            for t_pair in env_file_list:
-                key += 1
-                name, depth = t_pair
-                if z_min <= depth <= z_max:
-                    key2 = key
-                    if counter == 1:
-                        v1, v2 = env_file_list[key - 1]
-                        temp_name.append(v1)
-                        temp_depth.append(v2)
-                        del v1, v2
-                    temp_name.append(name)
-                    temp_depth.append(depth)
-                    counter += 1
+                for pair in env_file_list:
+                    env_name_i, env_depth_i = pair
+                    env_name.append(env_name_i)
+                    env_depth.append(env_depth_i)
 
-            if z_min == z_max:
-                key = -1
-                for t_pair in env_file_list:
-                    key += 1
-                    name, depth = t_pair
-                    if depth <= z_min:
-                        key2 = key
-                        if counter == 1:
-                            v1, v2 = env_file_list[key]
-                            temp_name.append(v1)
-                            temp_depth.append(v2)
-                            del v1, v2
-                        counter += 1
-            if "key2" in locals():
-                if key2 < key:
-                    v1, v2 = env_file_list[key2 + 1]
-                    temp_name.append(v1)
-                    temp_depth.append(v2)
-                    del v1, v2
+                log_file("Env array (items): " + str(env_depth) + "\n", output_directory, input_bathymetry_list, verbose_mode)
+                log_file("Env array (length): " + str(len(env_depth)) + "\n", output_directory, input_bathymetry_list, verbose_mode)
+
+                # Get Indices of location in list
+                env_min_array_depth = min(range(len(env_depth)), key=lambda i: abs(env_depth[i] - z_min))
+                env_max_array_depth = min(range(len(env_depth)), key=lambda i: abs(env_depth[i] - z_max))
+
+                log_file("env array zmin (pre pad): " + str(env_depth[env_min_array_depth]) + "\n", output_directory, input_bathymetry_list, verbose_mode)
+                log_file("env array zmax (pre pad): " + str(env_depth[env_max_array_depth]) + "\n", output_directory, input_bathymetry_list, verbose_mode)
+
+                if env_min_array_depth > 0:
+                    env_min_array_depth = env_min_array_depth - 1
+                    log_file("env array zmin (post pad): " + str(env_depth[env_min_array_depth]) + "\n", output_directory,
+                             input_bathymetry_list, verbose_mode)
+
+                if env_max_array_depth < len(env_depth) - 1:
+                    env_max_array_depth = env_max_array_depth + 2
+                    log_file("Pad value: +2" + "\n",
+                             output_directory,
+                             input_bathymetry_list, verbose_mode)
+                    env_array_depth = env_depth[env_min_array_depth:env_max_array_depth]
+
+
+                if env_max_array_depth >= len(env_depth) - 1:
+                    env_max_array_depth = len(env_depth) - 1
+                    log_file("Pad value: -1" + "\n",
+                             output_directory,
+                             input_bathymetry_list, verbose_mode)
+                    env_array_depth = env_depth[env_min_array_depth:]
+
+                log_file("env array zmax (index value): " + str(env_max_array_depth) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+
+                log_file("env array zmax (post pad): " + str(env_depth[env_max_array_depth]) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+
+                log_file("Environment depth array (values list): " + str(env_array_depth) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+                env_array_depth_reverse = env_array_depth[::-1]
+                log_file("Environment depth array (values list reverse): " + str(env_array_depth) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+                z_vals = np.unique(np.asarray(env_array_depth_reverse, dtype=float))
+
+                log_file("Environment depth array (number): " + str(z_vals.size) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+
+                log_file("Environment depth array (values): " + str(z_vals) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+
+                def pad(data):
+                    bad_indexes = np.isnan(data)
+                    good_indexes = np.logical_not(bad_indexes)
+                    good_data = data[good_indexes]
+                    interpolated = np.interp(bad_indexes.nonzero()[0], good_indexes.nonzero()[0], good_data)
+                    data[bad_indexes] = interpolated
+                    return data
+
+                data = np.array([np.flipud(pad(arcpy.RasterToNumPyArray(os.path.join(location, bname + "%f" % f),
+                                                                        arcpy.Point(x_min, y_min), len(x_vals),
+                                                                        len(y_vals), nodata_to_value=np.nan))) for f in env_array_depth_reverse])
+                data = data.T
+
+                file = open(os.path.join(output_directory, "Outputs",
+                                         "env_" + str(input_bathymetry_split_i) + ".csv"), 'w')
+                for x in x_vals:
+                    for y in y_vals:
+                        file.write(str(x) + ", " + str(y) + ", " + '\n')
+
+                file.close()
+
+                log_file("Environment TRI array (np shape): " + str(data.shape) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+
+                rgi = RegularGridInterpolator((x_vals, y_vals, z_vals), data, method='linear')
+                return rgi, y_vals_min, y_vals_max, x_vals_min, x_vals_max
+
+            # Build extents for subsetting the environemtnal grid
+
+            if depth_array_min == depth_array_min_comp and depth_array_max == depth_array_max_comp:
+                log_file("Skipped building environment value array: " + str(input_bathymetry_split_i) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
             else:
-                key = -1
-                for t_pair in env_file_list:
-                    key += 1
-                    name, depth = t_pair
-                    if depth >= z_min:
-                        if counter == 1:
-                            key2 = key
-                            v1, v2 = env_file_list[key - 1]
-                            temp_name.append(v1)
-                            temp_depth.append(v2)
-                            del v1, v2
-                        counter += 1
+                depth_array_min_comp <= depth_array_min
+                depth_array_max_comp >= depth_array_max
 
-                if key2 < key:
-                    v1, v2 = env_file_list[key2 + 1]
-                    temp_name.append(v1)
-                    temp_depth.append(v2)
-                    del v1, v2
+                log_file("Building environment value array: " + str(input_bathymetry_split_i) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
 
-            temp_depth_reverse = temp_depth[::-1]
+                # deal with single row/column data
+                if depth_array_y_min == depth_array_y_max:
+                    depth_array_y_min = depth_array_y_min - (input_environment0_cs * 3)
+                    depth_array_y_max = depth_array_y_max + (input_environment0_cs * 3)
 
-            z_vals = np.unique(np.asarray(temp_depth_reverse, dtype=float))
+                if depth_array_x_min == depth_array_x_max:
+                    depth_array_x_min = depth_array_x_min - (input_environment0_cs * 3)
+                    depth_array_x_max = depth_array_x_max + (input_environment0_cs * 3)
 
-            if verbose_mode:
-                print "zval len=" + str(z_vals.size) + " , z_vals=" + str(z_vals)
+                log_file("\nTRI Parameters" + "\n", output_directory, input_bathymetry_list, verbose_mode)
+                log_file("Environment data: " + str(input_environment) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+                log_file("Environment name: " + str(input_environment_name) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+                log_file("Depth min: " + str(depth_array_min) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+                log_file("Depth max: " + str(depth_array_max) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+                log_file("Depth array y min: " + str(depth_array_y_min) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+                log_file("Depth array y max: " + str(depth_array_y_max) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+                log_file("Depth array xmin: " + str(depth_array_x_min) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+                log_file("Depth array x max: " + str(depth_array_max) + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
 
-            def pad(data):
-                bad_indexes = np.isnan(data)
-                good_indexes = np.logical_not(bad_indexes)
-                good_data = data[good_indexes]
-                interpolated = np.interp(bad_indexes.nonzero()[0], good_indexes.nonzero()[0], good_data)
-                data[bad_indexes] = interpolated
-                return data
+                rgi, y_vals_min, y_vals_max, x_vals_min, x_vals_max = build_env_array(input_environment,
+                                                                                      input_environment_name,
+                                                                                      depth_array_min,
+                                                                                      depth_array_max,
+                                                                                      depth_array_y_min,
+                                                                                      depth_array_y_max,
+                                                                                      depth_array_x_min,
+                                                                                      depth_array_x_max)
 
-            # Workaround for single layer
-            #if len()
-            #del temp_depth[0]
-            data = np.array([np.flipud(pad(arcpy.RasterToNumPyArray(os.path.join(location, bname + "%f" % f),
-                                                                    arcpy.Point(x_min, y_min), len(x_vals),
-                                                                    len(y_vals), nodata_to_value=np.nan))) for f in
-                             temp_depth])
-            data = data.T
+            depth_array = depth_array.iloc[::-1]
 
-            file = open(os.path.join(output_directory, "Outputs",
-                                     "env_" + str(input_bathymetry_split_i) + ".csv"), 'w')
-            for x in x_vals:
-                for y in y_vals:
-                    file.write(str(x) + ", " + str(y) + ", " + '\n')
+            log_file("Trilinearly interpolating: " + str(input_bathymetry_split_i) + "\n", output_directory,
+                     input_bathymetry_list, verbose_mode)
 
-            file.close()
-            if verbose_mode:
-                print "1: x- " + str(x_vals) + " y- " + str(y_vals) + " z- " + str(z_vals)
-                print "here"
-                print data.size
-                print len(x_vals)
-                print len(y_vals)
-                print len(z_vals)
-                print data.shape
-                print temp_depth
-                print temp_depth_reverse
+            # Check for edge issues
+            if depth_array_x_min < x_vals_min or depth_array_x_max > x_vals_max or depth_array_y_min < y_vals_min or depth_array_y_max > y_vals_max:
+                edge = True
+                log_file("Edge status: " +str(input_bathymetry_split_i) + " is edge" + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
+            else:
+                edge = False
+                log_file("Edge status: " +str(input_bathymetry_split_i) + " is not edge" + "\n", output_directory,
+                         input_bathymetry_list, verbose_mode)
 
-            rgi = RegularGridInterpolator((x_vals, y_vals, z_vals), data, method='linear')
-            if verbose_mode:
-                print "here 2"
-            return rgi, y_vals_min, y_vals_max, x_vals_min, x_vals_max
+            f = open(os.path.join(output_directory, "Outputs",
+                                  "tri_" + str(input_bathymetry_split_i) + ".csv"), 'w')
 
-        # Build extents for subsetting the environemtnal grid
+            if not edge:
+                for index, row in depth_array.iterrows():
+                    # if verbose_mode:
+                    #     print str(index) + " " + str(row)
 
-        if depth_array_min == depth_array_min_comp and depth_array_max == depth_array_max_comp:
-            arcpy.AddMessage(
-                "Skipped building environment value array for " + str(input_bathymetry_split_i))
-        else:
-            depth_array_min_comp <= depth_array_min
-            depth_array_max_comp >= depth_array_max
-            arcpy.AddMessage("Building environment value array: " + str(input_bathymetry_split_i))
-
-            # deal with single row/column data
-            if depth_array_y_min == depth_array_y_max:
-                depth_array_y_min = depth_array_y_min - (input_environment0_cs * 3)
-                depth_array_y_max = depth_array_y_max + (input_environment0_cs * 3)
-
-            if depth_array_x_min == depth_array_x_max:
-                depth_array_x_min = depth_array_x_min - (input_environment0_cs * 3)
-                depth_array_x_max = depth_array_x_max + (input_environment0_cs * 3)
-
-            if verbose_mode:
-                print "2: env- " + str(input_environment) + " envname- " + str(input_environment_name) + " depthmin- " + \
-                  str(depth_array_min) + " depthmax- " + str(depth_array_max) + " depth_array_y_min- " + str(depth_array_y_min) \
-                  + " depth_array_y_max- " + str(depth_array_y_max) + " depth_array_x_min- " + str(depth_array_x_min) \
-                  + " depth_array_x_max- " + str(depth_array_x_max)
-
-            rgi, y_vals_min, y_vals_max, x_vals_min, x_vals_max = build_env_array(input_environment,
-                                                                                  input_environment_name,
-                                                                                  depth_array_min,
-                                                                                  depth_array_max,
-                                                                                  depth_array_y_min,
-                                                                                  depth_array_y_max,
-                                                                                  depth_array_x_min,
-                                                                                  depth_array_x_max)
-
-        depth_array = depth_array.iloc[::-1]
-        arcpy.AddMessage("Trilinearly interpolating: " + str(input_bathymetry_split_i))
-
-        # Check for edge issue
-        if depth_array_x_min < x_vals_min or depth_array_x_max > x_vals_max or depth_array_y_min < y_vals_min or depth_array_y_max > y_vals_max:
-            edge = True
-            if verbose_mode:
-                arcpy.AddMessage(str(input_bathymetry_split_i) + " is edge")
-        else:
-            edge = False
-            if verbose_mode:
-                arcpy.AddMessage(str(input_bathymetry_split_i) + " is not edge")
-
-        f = open(os.path.join(output_directory, "Outputs",
-                              "tri_" + str(input_bathymetry_split_i) + ".csv"), 'w')
-
-        if not edge:
-            for index, row in depth_array.iterrows():
-                if verbose_mode:
-                    print str(index) + " " + str(row)
-
-                if not np.isnan(row["depth"]) and row["depth"] >= 5500.:
-                    tri_value_list.append(rgi((row["x"], row["y"], 5499.0)))
-                    f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                        rgi((row["x"], row["y"], 5499.0))) + ', Flag 4\n')
-                elif not np.isnan(row["depth"]) and row["depth"] < 0.:
-                    tri_value_list.append(rgi((row["x"], row["y"], 0.0)))
-                    f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                        rgi((row["x"], row["y"], 0.0))) + ', Flag 4\n')
-                elif np.isnan(row["depth"]):
-                    tri_value_list.append("-9999")
-                    f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + "-9999" + ", Flag 3\n")
-                elif not np.isnan(row["depth"]):
-                    tri_value_list.append(rgi((row["x"], row["y"], row["depth"])))
-                    f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                        rgi((row["x"], row["y"], row["depth"]))) + ", Flag 2" + '\n')
-        elif edge:
-            # Deal with edge effect
-            for index, row in depth_array.iterrows():
-                if not np.isnan(row["depth"]) and row["depth"] >= 5500.:
-                    # In appropriate space
-                    if row["x"] > x_vals_min and row["x"] < x_vals_max and row["y"] > y_vals_min and row[
-                        "y"] < y_vals_max:
+                    if not np.isnan(row["depth"]) and row["depth"] >= 5500.:
                         tri_value_list.append(rgi((row["x"], row["y"], 5499.0)))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((row["x"], row["y"], 5499.0))) + ", OKDeep" + '\n')
-                    # Bottom Left
-                    elif row["x"] < x_vals_min and row["y"] < y_vals_min:
-                        tri_value_list.append(rgi((x_vals_min, y_vals_min, 5499.0)))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((x_vals_min, y_vals_min, 5499.0))) + ", BotLeftDeep" + '\n')
-                    # Upper Left
-                    elif row["x"] < x_vals_min and row["y"] > y_vals_max:
-                        tri_value_list.append(rgi((x_vals_min, y_vals_max, 5499.0)))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((row["x"], row["y"], 5499.0))) + ", UpLeftDeep" + '\n')
-                    # Bottom Right
-                    elif row["x"] > x_vals_max and row["y"] < y_vals_min:
-                        tri_value_list.append(rgi((x_vals_max, y_vals_min, 5499.0)))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((x_vals_max, y_vals_min, 5499.0))) + ", BotRightDeep" + '\n')
-                    # Upper Right
-                    elif row["x"] > x_vals_max and row["y"] > y_vals_max:
-                        tri_value_list.append(rgi((x_vals_max, y_vals_max, 5499.0)))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((x_vals_max, y_vals_max, 5499.0))) + ", UpRightDeep" + '\n')
-                    # Top
-                    elif row["y"] > y_vals_max:
-                        tri_value_list.append(rgi((row["x"], y_vals_max, 5499.0)))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((row["x"], y_vals_max, 5499.0))) + ", TopDeep" + '\n')
-                    # Bottom
-                    elif row["y"] < y_vals_min:
-                        tri_value_list.append(rgi((row["x"], y_vals_min, 5499.0)))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((row["x"], y_vals_min, 5499.0))) + ", BotDeep" + '\n')
-                    # Left
-                    elif row["x"] < x_vals_min:
-                        tri_value_list.append(rgi((x_vals_min, row["y"], 5499.0)))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((x_vals_min, row["y"], 5499.0))) + ", LeftDeep" + '\n')
-                    # Right
-                    elif row["x"] > x_vals_max:
-                        tri_value_list.append(rgi((x_vals_max, row["y"], 5499.0)))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((x_vals_max, row["y"], 5499.0))) + ", RightDeep" + '\n')
-                elif np.isnan(row["depth"]):
-                    tri_value_list.append("-9999")
-                    f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + "-9999" + ", Flagged 1" + '\n')
-                elif not np.isnan(row["depth"]):
-                    # In appropriate space
-                    if row["x"] > x_vals_min and row["x"] < x_vals_max and row["y"] > y_vals_min and row[
-                        "y"] < y_vals_max:
+                        # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                        #     rgi((row["x"], row["y"], 5499.0))) + ', Flag 4\n')
+                    elif not np.isnan(row["depth"]) and row["depth"] < 0.:
+                        tri_value_list.append(rgi((row["x"], row["y"], 0.0)))
+                        # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                        #     rgi((row["x"], row["y"], 0.0))) + ', Flag 4\n')
+                    elif np.isnan(row["depth"]):
+                        tri_value_list.append("-9999")
+                        # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + "-9999" + ", Flag 3\n")
+                    elif not np.isnan(row["depth"]):
                         tri_value_list.append(rgi((row["x"], row["y"], row["depth"])))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((row["x"], row["y"], row["depth"]))) + ", OK, " + str(row["depth"]) + '\n')
-                    # Bottom Left
-                    elif row["x"] < x_vals_min and row["y"] < y_vals_min:
-                        tri_value_list.append(rgi((x_vals_min, y_vals_min, row["depth"])))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((x_vals_min, y_vals_min, row["depth"]))) + ", BotLeft" + '\n')
-                    # Upper Left
-                    elif row["x"] < x_vals_min and row["y"] > y_vals_max:
-                        tri_value_list.append(rgi((x_vals_min, y_vals_max, row["depth"])))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((x_vals_min, y_vals_max, row["depth"]))) + ", UpLeft" + '\n')
-                    # Bottom Right
-                    elif row["x"] > x_vals_max and row["y"] < y_vals_min:
-                        tri_value_list.append(rgi((x_vals_max, y_vals_min, row["depth"])))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((x_vals_max, y_vals_min, row["depth"]))) + ", BotRight" + '\n')
-                    # Upper Right
-                    elif row["x"] > x_vals_max and row["y"] > y_vals_max:
-                        tri_value_list.append(rgi((x_vals_max, y_vals_max, row["depth"])))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((x_vals_max, y_vals_max, row["depth"]))) + ", UpRight" + '\n')
-                    # Top
-                    elif row["y"] > y_vals_max:
-                        tri_value_list.append(rgi((row["x"], y_vals_max, row["depth"])))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((row["x"], y_vals_max, row["depth"]))) + ", Top" + '\n')
-                    # Bottom
-                    elif row["y"] < y_vals_min:
-                        tri_value_list.append(rgi((row["x"], y_vals_min, row["depth"])))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((row["x"], y_vals_min, row["depth"]))) + ", Bottom" + '\n')
-                    # Left
-                    elif row["x"] < x_vals_min:
-                        tri_value_list.append(rgi((x_vals_min, row["y"], row["depth"])))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((x_vals_min, row["y"], row["depth"]))) + ", Left" + '\n')
-                    # Right
-                    elif row["x"] > x_vals_max:
-                        tri_value_list.append(rgi((x_vals_max, row["y"], row["depth"])))
-                        f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
-                            rgi((x_vals_max, row["y"], row["depth"]))) + ", Right" + '\n')
-                else:
-                    f.write(str(row["x"]) + ", " + str(row["y"]) + ", 100000" + ', Flag 5\n')
+                        # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                        #     rgi((row["x"], row["y"], row["depth"]))) + ", Flag 2" + '\n')
+            elif edge:
+                # Deal with edge effect
+                for index, row in depth_array.iterrows():
+                    if not np.isnan(row["depth"]) and row["depth"] >= 5500.:
+                        # In appropriate space
+                        if row["x"] > x_vals_min and row["x"] < x_vals_max and row["y"] > y_vals_min and row[
+                            "y"] < y_vals_max:
+                            tri_value_list.append(rgi((row["x"], row["y"], 5499.0)))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((row["x"], row["y"], 5499.0))) + ", OKDeep" + '\n')
+                        # Bottom Left
+                        elif row["x"] < x_vals_min and row["y"] < y_vals_min:
+                            tri_value_list.append(rgi((x_vals_min, y_vals_min, 5499.0)))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((x_vals_min, y_vals_min, 5499.0))) + ", BotLeftDeep" + '\n')
+                        # Upper Left
+                        elif row["x"] < x_vals_min and row["y"] > y_vals_max:
+                            tri_value_list.append(rgi((x_vals_min, y_vals_max, 5499.0)))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((row["x"], row["y"], 5499.0))) + ", UpLeftDeep" + '\n')
+                        # Bottom Right
+                        elif row["x"] > x_vals_max and row["y"] < y_vals_min:
+                            tri_value_list.append(rgi((x_vals_max, y_vals_min, 5499.0)))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((x_vals_max, y_vals_min, 5499.0))) + ", BotRightDeep" + '\n')
+                        # Upper Right
+                        elif row["x"] > x_vals_max and row["y"] > y_vals_max:
+                            tri_value_list.append(rgi((x_vals_max, y_vals_max, 5499.0)))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((x_vals_max, y_vals_max, 5499.0))) + ", UpRightDeep" + '\n')
+                        # Top
+                        elif row["y"] > y_vals_max:
+                            tri_value_list.append(rgi((row["x"], y_vals_max, 5499.0)))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((row["x"], y_vals_max, 5499.0))) + ", TopDeep" + '\n')
+                        # Bottom
+                        elif row["y"] < y_vals_min:
+                            tri_value_list.append(rgi((row["x"], y_vals_min, 5499.0)))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((row["x"], y_vals_min, 5499.0))) + ", BotDeep" + '\n')
+                        # Left
+                        elif row["x"] < x_vals_min:
+                            tri_value_list.append(rgi((x_vals_min, row["y"], 5499.0)))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((x_vals_min, row["y"], 5499.0))) + ", LeftDeep" + '\n')
+                        # Right
+                        elif row["x"] > x_vals_max:
+                            tri_value_list.append(rgi((x_vals_max, row["y"], 5499.0)))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((x_vals_max, row["y"], 5499.0))) + ", RightDeep" + '\n')
+                    elif np.isnan(row["depth"]):
+                        tri_value_list.append("-9999")
+                        # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + "-9999" + ", Flagged 1" + '\n')
+                    elif not np.isnan(row["depth"]):
+                        # In appropriate space
+                        if row["x"] > x_vals_min and row["x"] < x_vals_max and row["y"] > y_vals_min and row[
+                            "y"] < y_vals_max:
+                            tri_value_list.append(rgi((row["x"], row["y"], row["depth"])))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((row["x"], row["y"], row["depth"]))) + ", OK, " + str(row["depth"]) + '\n')
+                        # Bottom Left
+                        elif row["x"] < x_vals_min and row["y"] < y_vals_min:
+                            tri_value_list.append(rgi((x_vals_min, y_vals_min, row["depth"])))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((x_vals_min, y_vals_min, row["depth"]))) + ", BotLeft" + '\n')
+                        # Upper Left
+                        elif row["x"] < x_vals_min and row["y"] > y_vals_max:
+                            tri_value_list.append(rgi((x_vals_min, y_vals_max, row["depth"])))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((x_vals_min, y_vals_max, row["depth"]))) + ", UpLeft" + '\n')
+                        # Bottom Right
+                        elif row["x"] > x_vals_max and row["y"] < y_vals_min:
+                            tri_value_list.append(rgi((x_vals_max, y_vals_min, row["depth"])))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((x_vals_max, y_vals_min, row["depth"]))) + ", BotRight" + '\n')
+                        # Upper Right
+                        elif row["x"] > x_vals_max and row["y"] > y_vals_max:
+                            tri_value_list.append(rgi((x_vals_max, y_vals_max, row["depth"])))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((x_vals_max, y_vals_max, row["depth"]))) + ", UpRight" + '\n')
+                        # Top
+                        elif row["y"] > y_vals_max:
+                            tri_value_list.append(rgi((row["x"], y_vals_max, row["depth"])))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((row["x"], y_vals_max, row["depth"]))) + ", Top" + '\n')
+                        # Bottom
+                        elif row["y"] < y_vals_min:
+                            tri_value_list.append(rgi((row["x"], y_vals_min, row["depth"])))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((row["x"], y_vals_min, row["depth"]))) + ", Bottom" + '\n')
+                        # Left
+                        elif row["x"] < x_vals_min:
+                            tri_value_list.append(rgi((x_vals_min, row["y"], row["depth"])))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((x_vals_min, row["y"], row["depth"]))) + ", Left" + '\n')
+                        # Right
+                        elif row["x"] > x_vals_max:
+                            tri_value_list.append(rgi((x_vals_max, row["y"], row["depth"])))
+                            # f.write(str(row["x"]) + ", " + str(row["y"]) + ", " + str(
+                            #     rgi((x_vals_max, row["y"], row["depth"]))) + ", Right" + '\n')
+                    else:
+                        # f.write(str(row["x"]) + ", " + str(row["y"]) + ", 100000" + ', Flag 5\n')
+                        pass
+            f.close()
 
-        f.close()
+            # Get headers
+            with open(os.path.join(output_directory,
+                                   str(input_bathymetry_split_i) + ".asc")) as myfile:
+                header_ascii = myfile.readlines()[0:6]  # put here the interval you want
+            # arcpy.AddMessage("ASCII Header: " + str(header_ascii))
 
-        # Get headers
-        with open(os.path.join(output_directory,
-                               str(input_bathymetry_split_i) + ".asc")) as myfile:
-            header_ascii = myfile.readlines()[0:6]  # put here the interval you want
-        # arcpy.AddMessage("ASCII Header: " + str(header_ascii))
+            # Write headers to new file
+            with open(os.path.join(output_directory, "Outputs",
+                                   str(input_bathymetry_split_i) + ".asc"), 'a') as ascii_file:
+                for wr in header_ascii:
+                    ascii_file.write(wr)
 
-        # Write headers to new file
-        with open(os.path.join(output_directory, "Outputs",
-                               str(input_bathymetry_split_i) + ".asc"), 'a') as ascii_file:
-            for wr in header_ascii:
-                ascii_file.write(wr)
+            with open(os.path.join(output_directory, "Outputs",
+                                   str(input_bathymetry_split_i) + ".asc"), 'a') as ascii_file:
+                for tri in tri_value_list:
+                    ascii_file.write(str(tri) + " ")
+            log_file("Completed block: " + str(input_bathymetry_split_i) + "\n", output_directory,
+                     input_bathymetry_list, verbose_mode)
 
-        with open(os.path.join(output_directory, "Outputs",
-                               str(input_bathymetry_split_i) + ".asc"), 'a') as ascii_file:
-            for tri in tri_value_list:
-                ascii_file.write(str(tri) + " ")
+            del tri_value_list, tri, depth_array, depth_array_min, depth_array_max, input_bathymetry_split
+        else:
+            del input_bathymetry_split
 
-        arcpy.AddMessage("Completed block: " + str(input_bathymetry_split_i))
-
-        del tri_value_list, tri, depth_array, depth_array_min, depth_array_max, input_bathymetry_split
-    else:
-        arcpy.AddMessage("Skipping empty or previously completed raster: " + str(input_bathymetry_split_i))
-        del input_bathymetry_split
-
-    return
+    except Exception as e:
+        log_file("Recorded error if any: " + str(e) + "\n", output_directory,
+                 input_bathymetry_list, verbose_mode)
+        log_file("Recorded error if any: " + str(e) + "\n", output_directory,
+                 input_bathymetry_list + "_Failed", verbose_mode)
+        os.kill(0)
 
 
 # Stage 3 - Mosaic the chunks back into the extent of the original bathymetry
 
 def gdalchunk(output_directory, output_list_chunk):
-    arcpy.AddMessage("Mosaicking inputs using GDAL")
-
+    print "... Mosaicking using GDAL"
     arcpy.env.overwriteOutput = True
-
     if not arcpy.Exists(os.path.join(output_directory, "Outputs_GDAL")):
         os.makedirs(os.path.join(output_directory, "Outputs_GDAL"))
-
     counter = 0
-
     for raster_output in output_list_chunk:
         counter += 1
         arcpy.Mirror_management(in_raster=os.path.join(output_directory, "Outputs", raster_output),
                                 out_raster=os.path.join(output_directory, "Outputs_GDAL", "sp" + str(counter) + ".tif"))
-
     gdal_location = r"c:\OSGeo4W64\bin\gdalwarp.exe --config GDAL_DATA C:\OSGeo4W64\share\gdal "
     gdal_files = os.path.join(output_directory, "Outputs_GDAL", "sp*.tif")
     gdal_output = os.path.join(output_directory, "tri_output.tif")
-
     with open(os.devnull, "w") as f:
         subprocess.call(gdal_location + gdal_files + " " + gdal_output, stdout=f)
-
-    arcpy.AddMessage("GDAL Mosaic complete..")
+    arcpy.AddMessage("... Mosaicking using GDAL complete")
 
 def mpchunk(output_directory, input_bathymetry_cs, output_list_chunk):
-    arcpy.AddMessage("Processing chunk: " + str(output_list_chunk[0]))
+    print "... Processing chunk: " + str(output_list_chunk[0])
     arcpy.env.overwriteOutput = True
     if not arcpy.Exists(
             os.path.join(output_directory, "Outputs_C", str(output_list_chunk[0]) + "_f", "a")):
@@ -731,7 +726,7 @@ def mpchunk(output_directory, input_bathymetry_cs, output_list_chunk):
                                            cellsize=input_bathymetry_cs, number_of_bands="1", mosaic_method="MEAN",
                                            mosaic_colormap_mode="MATCH")
 
-    arcpy.AddMessage("Completed chunk: " + str(output_list_chunk[0]))
+    print "... Completed mosaicking chunk: " + str(output_list_chunk[0])
 
 def raster_to_xyz(raster, raster_name, output, no_data_value):
 
@@ -787,41 +782,73 @@ def raster_to_xyz(raster, raster_name, output, no_data_value):
 
     return coordinates_x, coordinates_y
 
+def log_file(text, output_directory, filename, verbose_mode):
+    log_file_write = open(os.path.join(output_directory, "Outputs", str(filename) + ".log"), "a")
+    log_file_write.write(str(text))
+    log_file_write.close()
+    if verbose_mode:
+        print str(text)
 
 if __name__ == '__main__':
 
+
     env_data = [
-        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\temperature\Projected", "t_an", "temp"],
-        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\salinity\Projected", "s_an", "sal"],
-        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\aoxu\Output\Projected", "a_an", "aoxu"],
-        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\nitrate\Output\Projected", "n_an", "nit"],
-        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\oxygen\Projected", "o_an", "diso2"],
-        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\phosphate\Output\Projected", "p_an", "phos"],
-        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\pos\Output\Projected", "o_an", "pos"],
-        [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\silicate\Output\Projected", "i_an", "sil"]
+        [r"D:\GlobENV\1_Input_Environmental_Datasets\Regional\Mediterranean\dox\dox_max\Projected", "dox", "doxmax"],
+        [r"D:\GlobENV\1_Input_Environmental_Datasets\Regional\Mediterranean\dox\dox_mean\Projected", "dox", "doxmean"],
+        [r"D:\GlobENV\1_Input_Environmental_Datasets\Regional\Mediterranean\dox\dox_min\Projected", "dox", "doxmin"],
+        [r"D:\GlobENV\1_Input_Environmental_Datasets\Regional\Mediterranean\dox\dox_std\Projected", "dox", "doxstd"]
         ]
 
-    bathymetries = [[r"D:\GlobENV\2_Bathymetries_and_Outputs\NEA\srtm_sr", "srtm"],
-                    [r"D:\GlobENV\2_Bathymetries_and_Outputs\NEA\gebco_sr", "gebco"]
+    bathymetries = [[r"D:\GlobENV\2_Bathymetries_and_Outputs\Mediterranean\emodnet18_sr", "emod"],
+                    [r"D:\GlobENV\2_Bathymetries_and_Outputs\Mediterranean\geb20med_sr", "gebco"]
                     ]
 
-    output_directory_base = r"D:\GlobENV\2_Bathymetries_and_Outputs\NEA"
+    output_directory_base = r"D:\GlobENV\2_Bathymetries_and_Outputs\Mediterranean"
 
     cpu_cores_used = "10"
     chunk_mode = 'gdal'  # gdal or arcpy - GDAL way faster, need to install GDAL binaries in standard location
     test_mode = False
-    verbose_mode = False
+    verbose_mode = True
 
     for b in bathymetries:
         for e in env_data:
-            if b[1] == 'srtm' and e[2] == 'temp':
-                pass
-            elif b[1] == 'srtm' and e[2] == 'sal':
-                pass
-            elif b[1] == 'srtm' and e[2] == 'aoxu':
-                pass
-            elif b[1] == 'srtm' and e[2] == 'nit':
-                pass
-            else:
                 globenv(b[0], e[0], e[1], os.path.join(output_directory_base, b[1], e[2]), cpu_cores_used, chunk_mode, test_mode,
                         verbose_mode)
+
+
+    #
+    # env_data = [
+    #     [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\temperature\Projected", "t_an", "temp"],
+    #     [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\salinity\Projected", "s_an", "sal"],
+    #     [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\aoxu\Output\Projected", "a_an", "aoxu"],
+    #     [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\nitrate\Output\Projected", "n_an", "nit"],
+    #     [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\oxygen\Projected", "o_an", "diso2"],
+    #     [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\phosphate\Output\Projected", "p_an", "phos"],
+    #     [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\pos\Output\Projected", "o_an", "pos"],
+    #     [r"D:\GlobENV\1_Input_Environmental_Datasets\world-ocean_atlas-2018\silicate\Output\Projected", "i_an", "sil"]
+    #     ]
+    #
+    # bathymetries = [[r"D:\GlobENV\2_Bathymetries_and_Outputs\NEA\srtm_sr", "srtm"],
+    #                 [r"D:\GlobENV\2_Bathymetries_and_Outputs\NEA\gebco_sr", "gebco"]
+    #                 ]
+    #
+    # output_directory_base = r"D:\GlobENV\2_Bathymetries_and_Outputs\NEA"
+    #
+    # cpu_cores_used = "10"
+    # chunk_mode = 'gdal'  # gdal or arcpy - GDAL way faster, need to install GDAL binaries in standard location
+    # test_mode = False
+    # verbose_mode = False
+    #
+    # for b in bathymetries:
+    #     for e in env_data:
+    #         if b[1] == 'srtm' and e[2] == 'temp':
+    #             pass
+    #         elif b[1] == 'srtm' and e[2] == 'sal':
+    #             pass
+    #         elif b[1] == 'srtm' and e[2] == 'aoxu':
+    #             pass
+    #         elif b[1] == 'srtm' and e[2] == 'nit':
+    #             pass
+    #         else:
+    #             globenv(b[0], e[0], e[1], os.path.join(output_directory_base, b[1], e[2]), cpu_cores_used, chunk_mode, test_mode,
+    #                     verbose_mode)
