@@ -244,7 +244,7 @@ def build_globenv_array(input_environment, environment_name):
 
     data = np.array([np.flipud(arcpy.RasterToNumPyArray(os.path.join(input_environment, environment_name + "%f" % f),
                                                             arcpy.Point(min(x_vals), min(y_vals)), len(x_vals),
-                                                            len(y_vals), nodata_to_value=np.nan)) for f in env_depth[::-1]])
+                                                            len(y_vals), nodata_to_value=np.nan)) for f in env_depth])
     data = data.T
 
     z_vals = np.unique(np.asarray(env_depth[::-1], dtype=float))
@@ -311,6 +311,9 @@ def mpprocess(output_directory, input_environment_name, input_bathymetry_folder,
                 depth_array["depth"] *= -1
 
             depth_array = depth_array.iloc[::-1]
+
+            log_file("Depth array: " + str(depth_array) + "\n", output_directory,
+                     input_bathymetry_list, verbose_mode)
 
             log_file("Trilinearly interpolating: " + str(input_bathymetry_split_i) + "\n", output_directory,
                      input_bathymetry_list, verbose_mode)
@@ -497,7 +500,7 @@ if __name__ == '__main__':
                     [r"D:\GlobENV\2_Bathymetries_and_Outputs\Mediterranean\geb20med_sr", "gebco"]
                     ]
 
-    output_directory_base = r"D:\GlobENV\2_Bathymetries_and_Outputs\Mediterranean"
+    output_directory_base = r"D:\GlobENV\2_Bathymetries_and_Outputs\Mediterranean_nearest_3"
 
     cpu_cores_used = "10"
     chunk_mode = 'gdal'  # gdal or arcpy - GDAL way faster, need to install GDAL binaries in standard location
