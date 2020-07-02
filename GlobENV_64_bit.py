@@ -318,11 +318,18 @@ def mpprocess(output_directory, input_environment_name, input_bathymetry_folder,
             log_file("Trilinearly interpolating: " + str(input_bathymetry_split_i) + "\n", output_directory,
                      input_bathymetry_list, verbose_mode)
 
-            for index, row in depth_array.iterrows():
-                if not np.isnan(row["depth"]):
-                    tri_value_list.append(rgi((row["x"], row["y"], row["depth"])))
-                elif np.isnan(row["depth"]):
+            for i in depth_array.index:
+                depth_val = depth_array.get_value(i, "depth")
+                if not np.isnan(depth_val):
+                    tri_value_list.append(rgi((depth_array.get_value(i, "x"), depth_array.get_value(i, "y"), depth_val)))
+                elif np.isnan(depth_val):
                     tri_value_list.append("-9999")
+
+            # for index, row in depth_array.iterrows():
+            #     if not np.isnan(row["depth"]):
+            #         tri_value_list.append(rgi((row["x"], row["y"], row["depth"])))
+            #     elif np.isnan(row["depth"]):
+            #         tri_value_list.append("-9999")
 
             # Get headers
             with open(os.path.join(output_directory,
@@ -484,7 +491,7 @@ if __name__ == '__main__':
 
     env_data = [
         #chl
-        [r"D:\GlobENV\1_Input_Environmental_Datasets\Regional\Mediterranean\chl\chl_max\Projected", "chl", "chlmax"],
+        #[r"D:\GlobENV\1_Input_Environmental_Datasets\Regional\Mediterranean\chl\chl_max\Projected", "chl", "chlmax"],
         [r"D:\GlobENV\1_Input_Environmental_Datasets\Regional\Mediterranean\chl\chl_mean\Projected", "chl", "chlmean"],
         [r"D:\GlobENV\1_Input_Environmental_Datasets\Regional\Mediterranean\chl\chl_min\Projected", "chl", "chlmin"],
         [r"D:\GlobENV\1_Input_Environmental_Datasets\Regional\Mediterranean\chl\chl_std\Projected", "chl", "chlstd"],
