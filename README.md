@@ -8,8 +8,8 @@ Several marine climatologies are currently available. For example, Bio-ORACLE in
 
 ### GlobENV Methodology
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="Images/Figure_1_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="Images/Figure_1_light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="Images/Figure_1_light.png">
+  <source media="(prefers-color-scheme: light)" srcset="Images/Figure_1_dark.png">
   <a href="Images/Figure_1_light.png">
   <img alt="Hashnode logo" src="Images/Figure_1_light.png" width="200", align="right">
   </a>
