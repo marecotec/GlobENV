@@ -8,9 +8,9 @@ Several marine climatologies are currently available. For example, Bio-ORACLE in
 
 ### GlobENV Methodology
 <picture>
-  <a href="Images/Figure_1_light.png">
-  <source media="(prefers-color-scheme: dark)" srcset="Images/Figure_1_dark.png">
-  <img alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="Images/Figure_1_light.png" width="200", align="right">
+  <a href="./Images/Figure_1_light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="./Images/Figure_1_dark.png">
+  <img alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="./Images/Figure_1_light.png" width="200", align="right">
   </a>
 </picture>
 Trilinear interpolation on a three-dimensional regular grid was used to estimate conditions on the seafloor from various environmental data sources. This approach interpolates the value of a point at depth z with coordinates x and y from eight surrounding points obtained from regularly gridded environmental data (Figure 1). I originally developed this code for ArcGIS 10, and it was supremely challenging with memory limitations that are imparted from the 32-bit Python (2.7) that was bundled with the arcpy Python library. I have archived that codebase in the "Legacy ArcGIS 10.x" folder, and it does work but you would have to split your bathymetric file into small chunks due to memory issues. Your best bet would be to use the 64-bit geoprocessing addon that is available for ArcGIS 10.x. The current code requires ArcGIS Pro with Python 3 (64-bit) and GDAL. I have stored those files 
