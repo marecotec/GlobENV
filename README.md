@@ -17,11 +17,13 @@ Trilinear interpolation on a three-dimensional regular grid was used to estimate
 
 The approach requires several steps and each step is split into a single Python file that can be set up to run in a batch form.
 
+<a href="./Images/Figure_1_light.png">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./Images/Figure_1_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="./Images/Figure_1_light.png">
-  <img alt="Shows a black logo in light color mode and a white one in dark color mode." src="./Images/Figure_1_light.png">
+  <img alt="Shows a black logo in light color mode and a white one in dark color mode." src="./Images/Figure_1_light.png" width="200", align="right">
 </picture>
+</a>
 
 #### Step 1
 Data preparation is 
