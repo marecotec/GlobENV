@@ -8,21 +8,13 @@ Several marine climatologies are currently available. For example, Bio-ORACLE in
 
 ### GlobENV Methodology
 <a href="./Images/Figure_1_light.png">
-
-<picture><figure>
+<picture>
   <source media="(prefers-color-scheme: dark)" srcset="./Images/Figure_1_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="./Images/Figure_1_light.png">
   <img alt="Figure 1. Computational representation of trilinear interpolation for GlobENV." src="./Images/Figure_1_light.png" width="300", align="right">
-  <figcaption>This is my caption text.</figcaption>
-</figure>
   </picture>
-  
 </a>
-Trilinear interpolation on a three-dimensional regular grid was used to estimate conditions on the seafloor from various environmental data sources (using scipy). This approach interpolates the value of a point at depth z with coordinates x and y from eight surrounding points obtained from regularly gridded environmental data (Figure 1). I originally developed this code for ArcGIS 10, and it was supremely challenging with memory limitations that are imparted from the 32-bit Python (2.7) that was bundled with the arcpy Python library. I have archived that codebase in the "Legacy ArcGIS 10.x" folder, and it does work but you would have to split your bathymetric file into small chunks due to memory issues. Your best bet would be to use the 64-bit geoprocessing addon that is available for ArcGIS 10.x. The current code requires ArcGIS Pro with Python 3 (64-bit) and GDAL. I have stored those files 
-
-The approach requires several steps and each step is split into a single Python file that can be set up to run in a batch form.
-
-
+Trilinear interpolation on a three-dimensional regular grid was used to estimate conditions on the seafloor from various environmental data sources (using scipy). This approach interpolates the value of a point at depth z with coordinates x and y from eight surrounding points obtained from regularly gridded environmental data (Figure 1). I originally developed this code for ArcGIS 10, and it was supremely challenging with memory limitations that are imparted from the 32-bit Python (2.7) that was bundled with the arcpy Python library. I have archived that codebase in the ["Code Legacy ArcGIS 10"](./Code_Legacy_ArcGIS10/) folder, and it does work but you would have to split your bathymetric file into small chunks due to memory issues. Your best bet would be to use the 64-bit geoprocessing addon that is available for ArcGIS 10.x. The current code requires ArcGIS Pro with Python 3 (64-bit) and GDAL, and is accessed in the ["Code Current ArcGIS Pro"](./Code_Current_ArcGISPro/) folder.
 
 #### Step 1
 Data preparation is 
