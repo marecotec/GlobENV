@@ -7,23 +7,21 @@ The ocean is the largest habitat on earth, covering approximately 70% of the pla
 Several marine climatologies are currently available. For example, Bio-ORACLE initially provided a data package that focusses on surface waters (Tyberghein et al. 2012) which was recently extended to include some benthic and future climate data (Assis et al. 2017). The MARSPEC dataset was based upon higher resolution bathymetric dataset (i.e. SRTM30 Becker et al. 2009), and provides several benthic terrain variables and temperature/salinity for the sea surface (Sbrocco & Barber 2013). The GlobENV approach and dataset aims to extend these previous climatologies by providing an up-scaling approach that can be applied to any bathymetric dataset available of any resolution by using the best available environmental data in the ocean. It extends a widely used upscaling approaches developed by Davies & Guinotte (2011), by providing a more robust interpolation technique that is more computationally efficient.
 
 ### GlobENV Methodology
-<picture>
-  <a href="./Images/Figure_1_light.png">
-  <source media="(prefers-color-scheme: dark)" srcset="./Images/Figure_1_dark.png">
-  <img alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="./Images/Figure_1_light.png" width="200", align="right">
-  </a>
-</picture>
-Trilinear interpolation on a three-dimensional regular grid was used to estimate conditions on the seafloor from various environmental data sources. This approach interpolates the value of a point at depth z with coordinates x and y from eight surrounding points obtained from regularly gridded environmental data (Figure 1). I originally developed this code for ArcGIS 10, and it was supremely challenging with memory limitations that are imparted from the 32-bit Python (2.7) that was bundled with the arcpy Python library. I have archived that codebase in the "Legacy ArcGIS 10.x" folder, and it does work but you would have to split your bathymetric file into small chunks due to memory issues. Your best bet would be to use the 64-bit geoprocessing addon that is available for ArcGIS 10.x. The current code requires ArcGIS Pro with Python 3 (64-bit) and GDAL. I have stored those files 
-
-The approach requires several steps and each step is split into a single Python file that can be set up to run in a batch form.
-
 <a href="./Images/Figure_1_light.png">
+<figure>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./Images/Figure_1_dark.png">
   <source media="(prefers-color-scheme: light)" srcset="./Images/Figure_1_light.png">
-  <img alt="Shows a black logo in light color mode and a white one in dark color mode." src="./Images/Figure_1_light.png" width="200", align="right">
-</picture>
+  <img alt="Figure 1. Computational representation of trilinear interpolation for GlobENV." src="./Images/Figure_1_light.png" width="300", align="right">
+  </picture>
+  <figcaption>This is my caption text.</figcaption>
+</figure>
 </a>
+Trilinear interpolation on a three-dimensional regular grid was used to estimate conditions on the seafloor from various environmental data sources (using scipy). This approach interpolates the value of a point at depth z with coordinates x and y from eight surrounding points obtained from regularly gridded environmental data (Figure 1). I originally developed this code for ArcGIS 10, and it was supremely challenging with memory limitations that are imparted from the 32-bit Python (2.7) that was bundled with the arcpy Python library. I have archived that codebase in the "Legacy ArcGIS 10.x" folder, and it does work but you would have to split your bathymetric file into small chunks due to memory issues. Your best bet would be to use the 64-bit geoprocessing addon that is available for ArcGIS 10.x. The current code requires ArcGIS Pro with Python 3 (64-bit) and GDAL. I have stored those files 
+
+The approach requires several steps and each step is split into a single Python file that can be set up to run in a batch form.
+
+
 
 #### Step 1
 Data preparation is 
