@@ -1,0 +1,11 @@
+Projection    CYLINDRICAL
+Datum         WGS84
+Spheroid      WGS84
+Units         METERS
+Zunits        NO
+Xshift        0.0
+Yshift        0.0
+Parameters    
+ 1 /* Projection type < 1 | 2 | 3 >
+   0  0  0.0 /* Longitude of central meridian
+  30  0  0.0 /* Latitude of standard parallel
